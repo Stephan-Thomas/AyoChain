@@ -34,7 +34,7 @@ impl AyoMatchContract {
 
         // Transfer stake from creator to the contract
         let token_client = token::Client::new(&env, &token);
-        token_client.transfer(&creator, &env.current_contract_address(), &stake);
+        token_client.transfer(&creator, env.current_contract_address(), &stake);
 
         let match_count = env
             .storage()
@@ -91,7 +91,7 @@ impl AyoMatchContract {
 
         // Transfer stake from joiner to the contract
         let token_client = token::Client::new(&env, &match_state.token);
-        token_client.transfer(&joiner, &env.current_contract_address(), &match_state.stake);
+        token_client.transfer(&joiner, env.current_contract_address(), &match_state.stake);
 
         match_state.p2 = Some(joiner.clone());
         match_state.status = MatchStatus::InProgress;

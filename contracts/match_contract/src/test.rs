@@ -120,7 +120,7 @@ fn test_play_move() {
     let admin = Address::generate(&env);
     let p1 = Address::generate(&env);
     let p2 = Address::generate(&env);
-    let (token_id, token_admin, token) = create_token_contract(&env, &admin);
+    let (token_id, token_admin, _token) = create_token_contract(&env, &admin);
 
     token_admin.mint(&p1, &1000);
     token_admin.mint(&p2, &1000);

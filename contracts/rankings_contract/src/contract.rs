@@ -1,6 +1,6 @@
-use soroban_sdk::{contract, contractimpl, Address, Env, Vec};
-use crate::types::{DataKey, MatchOutcome, PlayerStats, LeaderboardEntry};
 use crate::elo::calculate_new_ratings;
+use crate::types::{DataKey, LeaderboardEntry, MatchOutcome, PlayerStats};
+use soroban_sdk::{Address, Env, Vec, contract, contractimpl};
 
 #[contract]
 pub struct RankingsContract;
@@ -14,14 +14,22 @@ impl RankingsContract {
         }
         env.storage().instance().set(&DataKey::Admin, &admin);
         let empty_board: Vec<LeaderboardEntry> = Vec::new(&env);
-        env.storage().instance().set(&DataKey::Leaderboard, &empty_board);
+        env.storage()
+            .instance()
+            .set(&DataKey::Leaderboard, &empty_board);
     }
 
     /// Set or update the authorized match contract address
     pub fn set_match_contract(env: Env, match_contract: Address) {
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).expect("Not initialized");
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .expect("Not initialized");
         admin.require_auth();
-        env.storage().instance().set(&DataKey::MatchContract, &match_contract);
+        env.storage()
+            .instance()
+            .set(&DataKey::MatchContract, &match_contract);
     }
 
     /// Record match outcome, update Elo ratings, win/loss stats, streaks, and token earnings
@@ -36,10 +44,18 @@ impl RankingsContract {
         caller.require_auth();
 
         // Ensure caller is either admin or the match contract
-        let admin: Address = env.storage().instance().get(&DataKey::Admin).expect("Not initialized");
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .expect("Not initialized");
         let authorized = if caller == admin {
             true
-        } else if let Some(match_contract) = env.storage().instance().get::<_, Address>(&DataKey::MatchContract) {
+        } else if let Some(match_contract) = env
+            .storage()
+            .instance()
+            .get::<_, Address>(&DataKey::MatchContract)
+        {
             caller == match_contract
         } else {
             false
@@ -105,16 +121,36 @@ impl RankingsContract {
         }
 
         // Save updated stats
-        env.storage().persistent().set(&DataKey::PlayerStats(player1.clone()), &p1_stats);
-        env.storage().persistent().set(&DataKey::PlayerStats(player2.clone()), &p2_stats);
+        env.storage()
+            .persistent()
+            .set(&DataKey::PlayerStats(player1.clone()), &p1_stats);
+        env.storage()
+            .persistent()
+            .set(&DataKey::PlayerStats(player2.clone()), &p2_stats);
 
         // Update leaderboard cache
-        Self::update_leaderboard_entry(&env, player1.clone(), p1_stats.rating, p1_stats.wins, p1_stats.earnings);
-        Self::update_leaderboard_entry(&env, player2.clone(), p2_stats.rating, p2_stats.wins, p2_stats.earnings);
+        Self::update_leaderboard_entry(
+            &env,
+            player1.clone(),
+            p1_stats.rating,
+            p1_stats.wins,
+            p1_stats.earnings,
+        );
+        Self::update_leaderboard_entry(
+            &env,
+            player2.clone(),
+            p2_stats.rating,
+            p2_stats.wins,
+            p2_stats.earnings,
+        );
 
         // Emit ratings updated event
         env.events().publish(
-            (soroban_sdk::symbol_short!("elo_upd"), player1.clone(), player2.clone()),
+            (
+                soroban_sdk::symbol_short!("elo_upd"),
+                player1.clone(),
+                player2.clone(),
+            ),
             (new_r1, new_r2),
         );
     }
@@ -201,6 +237,8 @@ impl RankingsContract {
             }
         }
 
-        env.storage().instance().set(&DataKey::Leaderboard, &new_board);
+        env.storage()
+            .instance()
+            .set(&DataKey::Leaderboard, &new_board);
     }
 }

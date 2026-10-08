@@ -1,7 +1,7 @@
 #![cfg(test)]
 
 use super::*;
-use soroban_sdk::{testutils::Address as _, Address, Env};
+use soroban_sdk::{Address, Env, testutils::Address as _};
 use types::MatchOutcome;
 
 #[test]

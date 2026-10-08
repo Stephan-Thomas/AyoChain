@@ -14,13 +14,7 @@ pub fn calculate_new_ratings(
     let k = (k1 + k2) / 2;
 
     let diff = (r1 as i32) - (r2 as i32);
-    let clamped_diff = if diff > 400 {
-        400
-    } else if diff < -400 {
-        -400
-    } else {
-        diff
-    };
+    let clamped_diff = diff.clamp(-400, 400);
 
     // Expected score for player 1 in thousandths (0 to 1000)
     let expected1 = 500 + (clamped_diff * 5) / 4;
@@ -40,8 +34,16 @@ pub fn calculate_new_ratings(
     let new_r1_i32 = (r1 as i32) + delta;
     let new_r2_i32 = (r2 as i32) - delta;
 
-    let new_r1 = if new_r1_i32 < 100 { 100 } else { new_r1_i32 as u32 };
-    let new_r2 = if new_r2_i32 < 100 { 100 } else { new_r2_i32 as u32 };
+    let new_r1 = if new_r1_i32 < 100 {
+        100
+    } else {
+        new_r1_i32 as u32
+    };
+    let new_r2 = if new_r2_i32 < 100 {
+        100
+    } else {
+        new_r2_i32 as u32
+    };
 
     (new_r1, new_r2)
 }
