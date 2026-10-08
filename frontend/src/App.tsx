@@ -3,20 +3,24 @@ import './App.css';
 import { Navbar } from './components/Navbar';
 import { MatchList } from './components/Lobby/MatchList';
 import { GameView } from './components/GameView';
+import { Leaderboard } from './components/Rankings/Leaderboard';
+import { ProfileView } from './components/Profile/ProfileView';
 import { RulesModal } from './components/Modals/RulesModal';
 import { CreateMatchModal } from './components/Modals/CreateMatchModal';
 import { wallet } from './services/wallet';
 import type { WalletState } from './services/wallet';
 import { soroban } from './services/soroban';
+import { rankings } from './services/rankings';
 import type { MatchInfo, Player } from './types/game';
 import { getInitialBoard } from './engine/ayoRules';
 
 export function App() {
   const [walletState, setWalletState] = useState<WalletState>(wallet.getState());
-  const [activeTab, setActiveTab] = useState<'lobby' | 'game' | 'practice'>('lobby');
+  const [activeTab, setActiveTab] = useState<'lobby' | 'game' | 'practice' | 'leaderboard' | 'profile'>('lobby');
   const [matches, setMatches] = useState<MatchInfo[]>(() => soroban.getMatches());
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [soloMatch, setSoloMatch] = useState<MatchInfo | null>(null);
+  const [viewedProfileAddress, setViewedProfileAddress] = useState<string | null>(null);
 
   const [isRulesModalOpen, setIsRulesModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -34,7 +38,6 @@ export function App() {
 
   const handleOpenCreate = () => {
     if (!walletState.isConnected) {
-      // Automatically connect simulated wallet if not connected
       wallet.connectSimulated('alice');
     }
     setIsCreateModalOpen(true);
@@ -81,9 +84,9 @@ export function App() {
   const handleStartSoloAI = () => {
     const practiceMatch: MatchInfo = {
       id: 'solo-practice',
-      creator: walletState.address || 'GACHALLENGER7SOLOPLAYER7777777777777777777777777777AYO',
+      creator: walletState.address || 'GAAYOCHAINP1ALICE777777777777777777777777777777777777AYO1',
       opponent: 'Ayo Grandmaster AI',
-      wagerAmount: '10 XLM (Practice)',
+      wagerAmount: '10 XLM',
       tokenAddress: 'Native XLM',
       createdAt: Date.now(),
       lastMoveTimestamp: Date.now(),
@@ -102,26 +105,56 @@ export function App() {
     } else {
       refreshMatches();
     }
+
+    // Automatically record Elo and stats when match is decided
+    if (updated.board.is_game_over && updated.winner !== 'None') {
+      const p1 = updated.creator;
+      const p2 = updated.opponent || 'Ayo Grandmaster AI';
+      const wagerNum = parseFloat(updated.wagerAmount.replace(/[^\d.]/g, '')) || 10;
+      const outcome =
+        updated.winner === 'Player1Won'
+          ? 'Player1Won'
+          : updated.winner === 'Player2Won'
+          ? 'Player2Won'
+          : 'Draw';
+
+      try {
+        rankings.recordMatchOutcome(
+          p1,
+          p2,
+          outcome,
+          wagerNum,
+          updated.board.p1_captured,
+          updated.board.p2_captured
+        );
+      } catch (err) {
+        console.error('Failed to record rankings outcome:', err);
+      }
+    }
   };
 
   const handleResign = (matchId: string, player: Player) => {
     if (activeTab === 'practice') {
       if (soloMatch) {
-        setSoloMatch({
+        const winner = player === 'Player1' ? 'Player2Won' : 'Player1Won';
+        const updatedSolo: MatchInfo = {
           ...soloMatch,
           status: 'Completed',
-          winner: player === 'Player1' ? 'Player2Won' : 'Player1Won',
+          winner,
           board: {
             ...soloMatch.board,
             is_game_over: true,
-            winner: player === 'Player1' ? 'Player2Won' : 'Player1Won',
+            winner,
           },
-        });
+        };
+        setSoloMatch(updatedSolo);
+        handleUpdateMatch(updatedSolo);
       }
     } else {
       try {
-        soroban.resign(matchId, player);
+        const resignedMatch = soroban.resign(matchId, player);
         refreshMatches();
+        handleUpdateMatch(resignedMatch);
       } catch (e) {
         console.error(e);
       }
@@ -130,14 +163,21 @@ export function App() {
 
   const handleClaimTimeout = (matchId: string) => {
     try {
-      soroban.claimTimeout(matchId);
+      const timedOutMatch = soroban.claimTimeout(matchId);
       refreshMatches();
+      handleUpdateMatch(timedOutMatch);
     } catch (e) {
       console.error(e);
     }
   };
 
+  const handleSelectPlayerProfile = (address: string) => {
+    setViewedProfileAddress(address);
+    setActiveTab('profile');
+  };
+
   const activeMatch = matches.find((m) => m.id === activeMatchId);
+  const myAddress = walletState.address || 'GAAYOCHAINP1ALICE777777777777777777777777777777777777AYO1';
 
   return (
     <div className="app-root">
@@ -147,6 +187,9 @@ export function App() {
         onSelectTab={(tab) => {
           if (tab === 'practice' && !soloMatch) {
             handleStartSoloAI();
+          } else if (tab === 'profile') {
+            setViewedProfileAddress(myAddress);
+            setActiveTab('profile');
           } else {
             setActiveTab(tab);
           }
@@ -198,6 +241,17 @@ export function App() {
             onUpdateMatch={handleUpdateMatch}
             onResign={handleResign}
             onClaimTimeout={handleClaimTimeout}
+          />
+        )}
+
+        {activeTab === 'leaderboard' && (
+          <Leaderboard onSelectPlayer={handleSelectPlayerProfile} />
+        )}
+
+        {activeTab === 'profile' && (
+          <ProfileView
+            address={viewedProfileAddress || myAddress}
+            onBack={() => setActiveTab('leaderboard')}
           />
         )}
       </main>

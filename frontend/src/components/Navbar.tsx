@@ -6,8 +6,8 @@ import { sound } from '../services/audio';
 
 interface NavbarProps {
   walletState: WalletState;
-  activeTab: 'lobby' | 'game' | 'practice';
-  onSelectTab: (tab: 'lobby' | 'game' | 'practice') => void;
+  activeTab: 'lobby' | 'game' | 'practice' | 'leaderboard' | 'profile';
+  onSelectTab: (tab: 'lobby' | 'game' | 'practice' | 'leaderboard' | 'profile') => void;
   onOpenRules: () => void;
   onOpenSettings?: () => void;
 }
@@ -73,6 +73,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onSelectTab('practice')}
           >
             Solo AI Practice
+          </button>
+          <button
+            className={`nav-tab-btn ${activeTab === 'leaderboard' ? 'active' : ''}`}
+            onClick={() => onSelectTab('leaderboard')}
+          >
+            Hall of Champions
+          </button>
+          <button
+            className={`nav-tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
+            onClick={() => onSelectTab('profile')}
+          >
+            My Profile
           </button>
         </nav>
 
