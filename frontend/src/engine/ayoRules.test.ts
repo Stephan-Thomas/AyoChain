@@ -6,7 +6,7 @@ import {
   doesMoveFeed,
   canFeedOpponent,
 } from './ayoRules';
-import { BoardState } from '../types/game';
+import type { BoardState } from '../types/game';
 
 describe('AyoRules (Abapa)', () => {
   it('initializes standard 48-seed board', () => {

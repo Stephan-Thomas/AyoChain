@@ -1,4 +1,4 @@
-import { BoardState, Player, MatchOutcome } from '../types/game';
+import type { BoardState, Player, MatchOutcome } from '../types/game';
 
 export const P1_RANGE = [0, 1, 2, 3, 4, 5];
 export const P2_RANGE = [6, 7, 8, 9, 10, 11];
@@ -247,7 +247,6 @@ export function getBestAIMove(board: BoardState): number {
       }
 
       // Penalize leaving 1 or 2 seeds on own side that can be captured
-      const opp = res.newBoard.current_turn;
       const oppLegal = getLegalMoves(res.newBoard);
       let maxOppCapture = 0;
       for (const oppMove of oppLegal) {
