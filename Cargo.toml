@@ -1,5 +1,5 @@
 [workspace]
-members = [
+members = ["contracts/match_contract",
     "engine",
 ]
 resolver = "2"
