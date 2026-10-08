@@ -31,6 +31,7 @@ pub struct MatchState {
     pub stake: i128,
     pub status: MatchStatus,
     pub board: ContractBoard,
+    pub last_move_timestamp: u64,
 }
 
 #[contracttype]

@@ -301,6 +301,14 @@
                   },
                   {
                     "key": {
+                      "symbol": "last_move_timestamp"
+                    },
+                    "val": {
+                      "u64": "0"
+                    }
+                  },
+                  {
+                    "key": {
                       "symbol": "p1"
                     },
                     "val": {
